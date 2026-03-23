@@ -64,12 +64,12 @@ try:
     ukryj_bluetooth()
 
     # Wysyłanie danych w pętli
-    while True:
-        accel = mpu.readAccelerometerMaster()
-        wiadomosc = f"Akcelerometr X: {accel[0]:.2f} Y: {accel[1]:.2f} Z: {accel[2]:.2f}\n"
-
-        client_sock.send(wiadomosc.encode("utf-8"))
-        time.sleep(0.5)
+while True:
+            accel = mpu.readAccelerometerMaster()
+            gyro = mpu.readGyroscopeMaster()
+            wiadomosc = f"Akcelerometr: {accel} | Żyroskop: {gyro}\n"
+            client_sock.send(wiadomosc.encode("utf-8"))
+            time.sleep(0.5)
 
 except OSError:
     print("Klient się rozłączył.")
