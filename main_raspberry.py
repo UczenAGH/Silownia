@@ -18,7 +18,7 @@ system_uruchomiony = False # Flaga, żeby nie odpalać dwa razy naraz
 
 def przygotuj_bluetooth():
     global agent_process
-    print("🔧 Konfiguracja modułu Bluetooth...")
+    print("Konfiguracja modułu Bluetooth...")
 
     # 1. Włączenie radia
     subprocess.run(["sudo", "rfkill", "unblock", "bluetooth"], check=False)
@@ -39,11 +39,11 @@ def przygotuj_bluetooth():
     # 5. Włączenie widoczności
     subprocess.run(["sudo", "bluetoothctl", "discoverable", "on"], check=False)
     subprocess.run(["sudo", "bluetoothctl", "pairable", "on"], check=False)
-    print("📡 Bluetooth widoczny! Czekam na połączenie z telefonu...")
+    print("Bluetooth widoczny! Czekam na połączenie z telefonu...")
 
 def ukryj_bluetooth():
     global agent_process
-    print("\n🔒 Ukrywanie Bluetooth i zamykanie agenta...")
+    print("\nUkrywanie Bluetooth i zamykanie agenta...")
     subprocess.run(["sudo", "bluetoothctl", "discoverable", "off"], check=False)
     subprocess.run(["sudo", "bluetoothctl", "pairable", "off"], check=False)
     if agent_process:
@@ -52,7 +52,7 @@ def ukryj_bluetooth():
 atexit.register(ukryj_bluetooth)
 
 # Inicjalizacja czujnika MPU (robimy to raz na początku)
-print("⚙️ Inicjalizacja czujnika MPU...")
+print("Inicjalizacja czujnika MPU...")
 mpu = MPU9250(
     address_ak=AK8963_ADDRESS,
     address_mpu_master=MPU9050_ADDRESS_68,
@@ -77,7 +77,7 @@ def start_programu():
 
     try:
         client_sock, address = server_sock.accept()
-        print(f"✅ Połączono z: {address[0]}")
+        print(f"Połączono z: {address[0]}")
 
         ukryj_bluetooth()
 
@@ -89,16 +89,16 @@ def start_programu():
             time.sleep(0.5)
 
     except OSError:
-        print("❌ Klient się rozłączył.")
+        print("Klient się rozłączył.")
     except Exception as e:
-        print(f"⚠️ Błąd: {e}")
+        print(f"Błąd: {e}")
     finally:
         server_sock.close()
         system_uruchomiony = False
         print("🛑 System uśpiony. Czekam na przycisk...")
 
 # --- GŁÓWNA PĘTLA ---
-print("🟢 Program gotowy. Naciśnij przycisk, aby włączyć Bluetooth.")
+print("Program gotowy. Naciśnij przycisk, aby włączyć Bluetooth.")
 przycisk.when_pressed = start_programu
 
 # Zatrzymuje skrypt w miejscu, żeby się nie wyłączył
