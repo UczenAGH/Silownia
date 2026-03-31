@@ -21,7 +21,11 @@ def przygotuj_bluetooth():
     # 3. Uruchomienie agenta NoInputNoOutput (bez PINu) w tle
     subprocess.run(["sudo", "killall", "bt-agent"], stderr=subprocess.DEVNULL)
     agent_process = subprocess.Popen(["bt-agent", "-c", "NoInputNoOutput"])
-
+    time.sleep(1)
+    
+    # Otwieramy port SPP
+    subprocess.run(["sudo", "chmod", "777", "/var/run/sdp"], check=False)
+    subprocess.run(["sudo", "sdptool", "add", "SP"], check=False)
     # 4. Włączenie widoczności i możliwości parowania
     subprocess.run(["bluetoothctl", "discoverable", "on"], check=False)
     subprocess.run(["bluetoothctl", "pairable", "on"], check=False)
