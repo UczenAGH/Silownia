@@ -95,7 +95,7 @@ def start_programu():
     finally:
         server_sock.close()
         system_uruchomiony = False
-        print("🛑 System uśpiony. Czekam na przycisk...")
+        print("System uśpiony. Czekam na przycisk...")
 
 # --- GŁÓWNA PĘTLA ---
 print("Program gotowy. Naciśnij przycisk, aby włączyć Bluetooth.")
