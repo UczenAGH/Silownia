@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GYM IoT — Schemat Bazy Danych</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #11141b;
+    --border: #1e2330;
+    --text: #c8d0e0;
+    --dim: #5a6480;
+    --accent: #e8ff47;
+
+    --auth: #4e9eff;
+    --iot: #ff6b35;
+    --exercise:#a78bfa;
+    --training:#34d399;
+    --stats: #fbbf24;
+    --gamif: #f472b6;
+    --push: #67e8f9;
+    --audit: #fb7185;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .title-block h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .title-block h1 span { color: var(--accent); }
+  .title-block p {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .meta {
+    display: flex;
+    gap: 24px;
+    font-size: 0.7rem;
+    color: var(--dim);
+  }
+  .meta span { display: flex; align-items: center; gap: 6px; }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 18px 48px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ── MAIN GRID ── */
+  .canvas {
+    padding: 40px 48px 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  /* ── TABLE CARD ── */
+  .tbl {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .tbl:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .tbl-header {
+    padding: 10px 14px 9px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tbl-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .tbl-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: #fff;
+    letter-spacing: 0.02em;
+    flex: 1;
+  }
+  .tbl-badge {
+    font-size: 0.58rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  .tbl-cols {
+    padding: 6px 0;
+  }
+  .col {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 14px;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    transition: background 0.15s;
+  }
+  .col:hover { background: rgba(255,255,255,0.03); }
+
+  .col-icon {
+    font-size: 0.58rem;
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .col-name { color: var(--text); min-width: 110px; }
+  .col-name.pk { color: var(--accent); font-weight: 700; }
+  .col-name.fk { color: #93c5fd; }
+  .col-type {
+    color: var(--dim);
+    font-size: 0.62rem;
+    margin-left: auto;
+    text-align: right;
+  }
+  .col-flag {
+    font-size: 0.56rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.06);
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .tbl-more {
+    padding: 4px 14px 8px;
+    font-size: 0.62rem;
+    color: var(--dim);
+    border-top: 1px solid var(--border);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── VIEWS SECTION ── */
+  .section-title {
+    padding: 12px 48px 0;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .views-grid {
+    padding: 16px 48px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+
+  .view-card {
+    background: var(--surface);
+    border: 1px dashed #2a3040;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: border-color 0.2s;
+  }
+  .view-card:hover { border-color: var(--accent); }
+  .view-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: #a0a8c0;
+    margin-bottom: 4px;
+  }
+  .view-desc { font-size: 0.65rem; color: var(--dim); line-height: 1.5; }
+
+  /* ── SECURITY SECTION ── */
+  .security-grid {
+    padding: 16px 48px 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .sec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .sec-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .sec-items { list-style: none; }
+  .sec-items li {
+    font-size: 0.65rem;
+    color: var(--dim);
+    padding: 2px 0;
+    line-height: 1.5;
+    padding-left: 12px;
+    position: relative;
+  }
+  .sec-items li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ── TRIGGERS SECTION ── */
+  .triggers-row {
+    padding: 0 48px 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .trigger-chip {
+    background: rgba(232,255,71,0.05);
+    border: 1px solid rgba(232,255,71,0.2);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 48px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.62rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>GYM <span>IoT</span> — Schemat Bazy Danych</h1>
+  </div>
+
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--auth)"></div> Uwierzytelnianie</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--iot)"></div> IoT / Urządzenia</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--exercise)"></div> Biblioteka ćwiczeń</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--training)"></div> Treningi</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--stats)"></div> Statystyki</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gamif)"></div> Gamifikacja</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--push)"></div> Powiadomienia</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--audit)"></div> Audyt / Bezpieczeństwo</div>
+</div>
+
+<div class="canvas" id="tables-grid"></div>
+
+
+
+
+<script>
+const TABLES = [
+  {
+    name: 'users', domain: 'auth', badge: 'AUTH',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'email', type: 'TEXT', flag: 'UNIQUE' },
+      { name: 'password_hash', type: 'TEXT', flag: 'bcrypt' },
+      { name: 'display_name', type: 'TEXT' },
+      { name: 'role', type: 'TEXT', flag: 'user|admin' },
+      { name: 'is_active / is_deleted', type: 'BOOL' },
+      { name: 'failed_login_count', type: 'SMALLINT' },
+      { name: 'locked_until', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'auth_tokens', domain: 'auth', badge: 'AUTH',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'token_hash', type: 'TEXT', flag: 'SHA-256' },
+      { name: 'token_type', type: 'TEXT', flag: 'refresh…' },
+      { name: 'device_info', type: 'JSONB' },
+      { name: 'ip_address', type: 'INET' },
+      { name: 'expires_at', type: 'TIMESTAMPTZ' },
+      { name: 'revoked_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'user_settings', domain: 'auth', badge: 'AUTH',
+    cols: [
+      { name: 'user_id', type: 'UUID', pk: true, fk: true },
+      { name: 'notify_*', type: 'BOOL×3' },
+      { name: 'profile_public', type: 'BOOL' },
+      { name: 'weight_unit', type: 'TEXT', flag: 'kg|lbs' },
+      { name: 'auto_connect_ble', type: 'BOOL' },
+      { name: 'consent_analytics', type: 'BOOL', flag: 'RODO' },
+      { name: 'consent_marketing', type: 'BOOL', flag: 'RODO' },
+    ]
+  },
+  {
+    name: 'devices', domain: 'iot', badge: 'IOT',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'ble_mac_address', type: 'TEXT', flag: 'encrypted' },
+      { name: 'ble_mac_hash', type: 'TEXT', flag: 'SHA-256' },
+      { name: 'serial_number', type: 'TEXT', flag: 'UNIQUE' },
+      { name: 'firmware_version', type: 'TEXT' },
+      { name: 'battery_level', type: 'SMALLINT', flag: '0–100' },
+      { name: 'calibration_data', type: 'JSONB' },
+      { name: 'last_seen_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'user_devices', domain: 'iot', badge: 'IOT',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'device_id', type: 'UUID', fk: true },
+      { name: 'nickname', type: 'TEXT' },
+      { name: 'is_primary', type: 'BOOL' },
+      { name: 'pairing_method', type: 'TEXT', flag: 'qr|pin…' },
+      { name: 'paired_at', type: 'TIMESTAMPTZ' },
+      { name: 'unpaired_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'exercise_categories', domain: 'exercise', badge: 'LIB',
+    cols: [
+      { name: 'id', type: 'SMALLSERIAL', pk: true },
+      { name: 'name', type: 'TEXT', flag: 'UNIQUE' },
+      { name: 'name_en', type: 'TEXT' },
+      { name: 'icon_name', type: 'TEXT' },
+      { name: 'sort_order', type: 'SMALLINT' },
+    ]
+  },
+  {
+    name: 'exercises', domain: 'exercise', badge: 'LIB',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'category_id', type: 'SMALLINT', fk: true },
+      { name: 'name / slug', type: 'TEXT', flag: 'UNIQUE' },
+      { name: 'muscle_groups', type: 'TEXT[]' },
+      { name: 'equipment', type: 'TEXT[]' },
+      { name: 'difficulty', type: 'TEXT', flag: 'beg…adv' },
+      { name: 'detection_config', type: 'JSONB', flag: 'IMU' },
+      { name: 'is_system / created_by', type: 'BOOL/UUID' },
+    ]
+  },
+  {
+    name: 'workouts', domain: 'training', badge: 'TRAIN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'device_id', type: 'UUID', fk: true },
+      { name: 'started_at / ended_at', type: 'TIMESTAMPTZ' },
+      { name: 'duration_sec', type: 'INT', flag: 'GENERATED' },
+      { name: 'workout_type', type: 'TEXT', flag: 'strength…' },
+      { name: 'estimated_calories', type: 'SMALLINT' },
+      { name: 'status', type: 'TEXT', flag: 'in_progress…' },
+    ]
+  },
+  {
+    name: 'sets', domain: 'training', badge: 'TRAIN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'workout_id', type: 'UUID', fk: true },
+      { name: 'exercise_id', type: 'UUID', fk: true },
+      { name: 'set_number', type: 'SMALLINT' },
+      { name: 'actual_weight_kg', type: 'NUMERIC(6,2)' },
+      { name: 'completed_reps', type: 'SMALLINT' },
+      { name: 'avg_velocity_ms', type: 'NUMERIC(5,3)' },
+      { name: 'fatigue_index', type: 'NUMERIC(4,3)' },
+    ]
+  },
+  {
+    name: 'reps', domain: 'training', badge: 'TRAIN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'set_id', type: 'UUID', fk: true },
+      { name: 'rep_number', type: 'SMALLINT' },
+      { name: 'concentric_ms', type: 'SMALLINT' },
+      { name: 'eccentric_ms', type: 'SMALLINT' },
+      { name: 'total_duration_ms', type: 'SMALLINT', flag: 'GEN' },
+      { name: 'peak_acceleration_g', type: 'NUMERIC(6,3)' },
+      { name: 'range_of_motion_deg', type: 'NUMERIC(5,1)' },
+    ]
+  },
+  
+  {
+    name: 'stats_daily', domain: 'stats', badge: 'STATS',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'stat_date', type: 'DATE', flag: 'UNIQUE' },
+      { name: 'total_volume_kg', type: 'NUMERIC(10,2)' },
+      { name: 'total_reps', type: 'INT' },
+      { name: 'total_duration_sec', type: 'INT' },
+      { name: 'muscle_groups_trained', type: 'JSONB' },
+      { name: 'avg_quality_score', type: 'NUMERIC(4,1)' },
+    ]
+  },
+  {
+    name: 'personal_records', domain: 'stats', badge: 'STATS',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'exercise_id', type: 'UUID', fk: true },
+      { name: 'record_type', type: 'TEXT', flag: '1rm…' },
+      { name: 'record_value', type: 'NUMERIC(10,3)' },
+      { name: 'previous_value', type: 'NUMERIC(10,3)' },
+      { name: 'improvement_pct', type: 'NUMERIC(5,2)' },
+      { name: 'set_id', type: 'UUID', fk: true },
+    ]
+  },
+  {
+    name: 'strength_progress', domain: 'stats', badge: 'STATS',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'exercise_id', type: 'UUID', fk: true },
+      { name: 'measured_at', type: 'DATE' },
+      { name: 'estimated_1rm', type: 'NUMERIC(7,2)' },
+      { name: 'formula_used', type: 'TEXT', flag: 'epley' },
+      { name: 'based_on_weight', type: 'NUMERIC(6,2)' },
+      { name: 'based_on_reps', type: 'SMALLINT' },
+    ]
+  },
+  {
+    name: 'training_plans', domain: 'training', badge: 'PLAN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'name', type: 'TEXT' },
+      { name: 'plan_type', type: 'TEXT', flag: 'ppl…' },
+      { name: 'days_per_week', type: 'SMALLINT', flag: '1–7' },
+      { name: 'is_active', type: 'BOOL' },
+      { name: 'started_at', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'plan_days', domain: 'training', badge: 'PLAN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'plan_id', type: 'UUID', fk: true },
+      { name: 'day_number', type: 'SMALLINT', flag: '1–7' },
+      { name: 'name', type: 'TEXT' },
+    ]
+  },
+  {
+    name: 'plan_exercises', domain: 'training', badge: 'PLAN',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'plan_day_id', type: 'UUID', fk: true },
+      { name: 'exercise_id', type: 'UUID', fk: true },
+      { name: 'target_sets', type: 'SMALLINT' },
+      { name: 'target_reps_min/max', type: 'SMALLINT×2' },
+      { name: 'target_rpe', type: 'SMALLINT', flag: '1–10' },
+      { name: 'rest_sec', type: 'SMALLINT' },
+    ]
+  },
+  {
+    name: 'achievements', domain: 'gamif', badge: 'GAMIF',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'slug', type: 'TEXT', flag: 'UNIQUE' },
+      { name: 'name / description', type: 'TEXT' },
+      { name: 'icon_name', type: 'TEXT' },
+      { name: 'category', type: 'TEXT', flag: 'consist…' },
+      { name: 'condition', type: 'JSONB' },
+    ]
+  },
+  {
+    name: 'user_achievements', domain: 'gamif', badge: 'GAMIF',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'achievement_id', type: 'UUID', fk: true },
+      { name: 'achieved_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'push_tokens', domain: 'push', badge: 'PUSH',
+    cols: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'token_encrypted', type: 'TEXT', flag: 'ENC' },
+      { name: 'platform', type: 'TEXT', flag: 'ios|android' },
+      { name: 'app_version', type: 'TEXT' },
+      { name: 'is_active', type: 'BOOL' },
+      { name: 'last_used_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+  {
+    name: 'audit_log', domain: 'audit', badge: 'AUDIT',
+    cols: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'UUID', fk: true },
+      { name: 'actor_ip', type: 'INET' },
+      { name: 'action', type: 'TEXT', flag: 'login…' },
+      { name: 'resource_type / id', type: 'TEXT' },
+      { name: 'success', type: 'BOOL' },
+      { name: 'metadata', type: 'JSONB' },
+      { name: 'created_at', type: 'TIMESTAMPTZ' },
+    ]
+  },
+];
+
+const DOMAIN_COLOR = {
+  auth: 'var(--auth)',
+  iot: 'var(--iot)',
+  exercise: 'var(--exercise)',
+  training: 'var(--training)',
+  stats: 'var(--stats)',
+  gamif: 'var(--gamif)',
+  push: 'var(--push)',
+  audit: 'var(--audit)',
+};
+
+function renderTables() {
+  const grid = document.getElementById('tables-grid');
+  TABLES.forEach((t, i) => {
+    const color = DOMAIN_COLOR[t.domain];
+    const card = document.createElement('div');
+    card.className = 'tbl';
+    card.style.animationDelay = `${i * 30}ms`;
+
+    const cols = t.cols.map(c => `
+      <div class="col">
+        <span class="col-icon">${c.pk ? '🔑' : c.fk ? '🔗' : '·'}</span>
+        <span class="col-name ${c.pk ? 'pk' : c.fk ? 'fk' : ''}">${c.name}</span>
+        ${c.flag ? `<span class="col-flag">${c.flag}</span>` : ''}
+        <span class="col-type">${c.type}</span>
+      </div>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="tbl-header">
+        <div class="tbl-dot" style="background:${color}"></div>
+        <div class="tbl-name">${t.name}</div>
+        <div class="tbl-badge" style="background:${color}20;color:${color}">${t.badge}</div>
+      </div>
+      <div class="tbl-cols">${cols}</div>
+      ${t.more ? `<div class="tbl-more">↳ ${t.more}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+renderTables();
+</script>
+</body>
+</html>
